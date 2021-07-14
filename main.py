@@ -6,65 +6,61 @@ import shapely
 import fiona
 import geopandas as gpd
 import tkinter as tk
+from tkinter import ttk
 import geoalchemy2 as gal
 import sqlalchemy as sal
-import matplotlib.pyplot as plts
+import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfile
+from secret import engine_int
 
-#------------------variables-----------------------------
-
+#------------------Start postgres engine-----------------------------
+engine = sal.create_engine(engine_int)
 #------------------GUI part start------------------------
+#Create instance
 root = tk.Tk()
-root.title =('Area Clipper')
+#Add title
+root.title("Area Clipper")
+#Define the area
+root.geometry("300x200")
+#Adding a Label
+ttk.Label(root, text="Select a LGA.").pack(pady=10)
 
-canvas = tk.Canvas(root, width=600, height=300)
-canvas.grid(columnspan=3, rowspan=3)
+#Listings for LGA option
 
-#logo
-logo = Image.open('clip_image.png')
-logo = ImageTk.PhotoImage(logo)
-logo_label = tk.Label(image=logo)
-logo_label.image = logo
-logo_label.grid(column=1, row=0)
+sql_select = 'SELECT LOWER("ABBREV_NAME") abbrev, geom FROM boundaries.lga_20_08'
+listings_lga = gpd.GeoDataFrame.from_postgis(sql_select, engine, geom_col='geom')
 
-#instructions
-inst = tk.Label(root, text="Select the clipping area from the list", font="Raleway")
-inst.grid(columnspan=3, column=0, row=1)
 
+#--- Option menu ver
 def selected(event):
     myLabel = clicked.get()
-    print(myLabel)
+    sql_cut = f"""SELECT dc.* FROM dcdb.qld_dcdb_20_07 dc, (SELECT LOWER("ABBREV_NAME") AS abbrev, LOWER("LGA") AS lga,geom """ \
+              f"""FROM boundaries.lga_20_08) AS lga WHERE lga.abbrev = '{myLabel}' AND ST_Within(dc.o_shape, lga.geom)"""
+    listings = gpd.GeoDataFrame.from_postgis(sql_cut, engine, geom_col='o_shape')
+    #listings.to_file(f"DCDB_{myLabel}.shp")
+    fig, ax = plt.subplots(figsize=(12, 8))
+    listings.plot(ax=ax)
+    plt.axis('equal')
+    ax.set_axis_off()
+    plt.show()
 
-options = [1,2,3,4,5,67]
+options = listings_lga['abbrev'].tolist()
 
 clicked = tk.StringVar()
 clicked.set(options[0])
 
-drop = tk.OptionMenu(root, clicked, *options, command=selected)
-drop.grid(column=1, row=2)
+# drop = tk.OptionMenu(root, clicked, *options, command=selected)
+# drop.pack(pady=20)
 
-# ----practice PDF----
-# def open_file():
-#     browse_text.set("loading...")
-#     file = askopenfile(parent=root, mode='rb', title="Choose a file", filetype=[("Pdf file, "*.pdf)])
-#     if file:
-#         print("file was successfully loaded")
 
-# #Browse button
-# browse_text = tk.StringVar()
-# browse_btn = tk.Button(root, textvariable=browse_text, command=lambda:open_file(), font="Raleway", bg="#20bebe", fg="white", height=2, width=15)
-# browse_text.set("Browse")
-# browse_btn.grid(column=1, row=2)
-
-# ----prac pdf end-----
-
-canvas = tk.Canvas(root, width=600, height=250)
-canvas.grid(columnspan=3)
+op = tk.StringVar()
+lga_chosen = ttk.Combobox(root, width=12, textvariable=op)
+lga_chosen['values'] = options
+lga_chosen.current(0)
+lga_chosen.bind("<<ComboboxSelected>>", selected)
+lga_chosen.pack(pady=20)
 
 
 root.mainloop()
-
-
-
 #------------------GUI part end--------------------------
