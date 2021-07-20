@@ -145,10 +145,10 @@ class Clip:
         self.exc_text.set("Finished.")
 
         if self.type_out == 'LGA':
-            self.sql_cut = f"""SELECT dc.* FROM dcdb.qld_dcdb_20_07 dc, (SELECT LOWER("ABBREV_NAME") AS abbrev, LOWER("LGA") AS lga,geom """ \
+            self.sql_cut = f"""SELECT dc.* FROM dcdb.qld_dcdb_21_07 dc, (SELECT LOWER("ABBREV_NAME") AS abbrev, LOWER("LGA") AS lga,geom """ \
                        f"""FROM boundaries.lga_20_08) AS lga WHERE lga.abbrev = '{self.LGA_select}' AND ST_Within(dc.o_shape, lga.geom)"""
         elif self.type_out == 'SA2':
-            self.sql_cut = f"""SELECT dc.* FROM dcdb.qld_dcdb_20_07 dc, (SELECT LOWER(sa2_name11) AS name, gcc_name11 as region, shape as geom FROM boundaries.sa2_19_10) AS sa2 """ \
+            self.sql_cut = f"""SELECT dc.* FROM dcdb.qld_dcdb_21_07 dc, (SELECT LOWER(sa2_name11) AS name, gcc_name11 as region, shape as geom FROM boundaries.sa2_19_10) AS sa2 """ \
                            f"""WHERE sa2.region = '{self.sa2_region_select}' AND sa2.name = '{self.sa2_area_select}' AND ST_Within(dc.o_shape, ST_Transform(geom, 4283))"""
 
         self.listings = gpd.GeoDataFrame.from_postgis(self.sql_cut, engine, geom_col='o_shape')
@@ -177,4 +177,3 @@ class Clip:
 
 tt = Clip(root)
 root.mainloop()
-#------------------GUI part end--------------------------
