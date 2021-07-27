@@ -1,24 +1,12 @@
 #------------------import packages------------------------
-import numpy as np
-import pandas as pd
-import os
-import shapely
-import fiona
 import geopandas as gpd
 import tkinter as tk
 from tkinter import ttk
-from tkinter.filedialog import asksaveasfile
-import geoalchemy2 as gal
 import sqlalchemy as sal
-import matplotlib.pyplot as plt
-from PIL import Image, ImageTk
 from secret import engine_int
-
-#------------------Start postgres engine-----------------------------
+#------------------Start postgres engine--------------
 engine = sal.create_engine(engine_int)
-
-#------------------GUI part start------------------------
-##  Variables-----
+#------------------GUI part start---------------------
 #Create instance
 root = tk.Tk()
 #Add title
@@ -28,18 +16,7 @@ root.geometry("300x600")
 #Adding a Label
 ttk.Label(root, text="Select area types to clip.").pack(pady=5)
 
-
-##--------Global variable--------------------
-# type = ['LGA','SA2']
-# type_op = tk.StringVar()
-# type_chosen = ttk.Combobox(root, width=12, textvariable=type_op)
-# type_chosen['values'] = type
-# type_chosen.current(0)
-# type_chosen.pack(pady=5)
-# type_out = type_chosen.get()
-
-
-##--------Variables for LGA clip----------------------
+##--------Global Variables for LGA clip----------------------
 #Listings for LGA option
 sql_select = 'SELECT LOWER("ABBREV_NAME") abbrev, geom FROM boundaries.lga_20_08'
 listings_lga = gpd.GeoDataFrame.from_postgis(sql_select, engine, geom_col='geom')
@@ -47,12 +24,11 @@ listings_lga = gpd.GeoDataFrame.from_postgis(sql_select, engine, geom_col='geom'
 #Options to select
 options = listings_lga['abbrev'].tolist()
 
-
-##--------Variables for SA2 clip----------------------
+##--------Global Variables for SA2 clip----------------------
 #Listings for LGA option
 sa2_region_option = ['Greater Brisbane', 'Rest of Qld']
 
-##Variables for extension
+##--------Global Variables for extension---------------------
 extension = ['shp','gpkg']
 driver = ['MapInfo File','GPKG']
 
@@ -60,7 +36,6 @@ driver = ['MapInfo File','GPKG']
 ##------------LGA Clip Class----------------------
 class Clip:
     """This is  a class to clip the LGA area"""
-
 # ---LGA part-----
     def lga_selected(self, event):
         self.LGA_select = self.chosen.get()
@@ -81,6 +56,7 @@ class Clip:
         self.exc_btn = ttk.Button(root, textvariable=self.exc_text, command=lambda: self.query())
         self.exc_text.set("Execute Clipping")
         self.exc_btn.pack(pady=5)
+
 
 
 #---sa2 part------
@@ -162,15 +138,12 @@ class Clip:
         #     self.listings.to_file(f"output/{self.LGA_select}.tab", driver=driver[0])
         elif self.ext_out == 'gpkg':
             if self.type_out == 'LGA':
-                self.self.listings.to_file(f"output/{self.LGA_select}.gpkg", driver=driver[1])
+                self.listings.to_file(f"output/{self.LGA_select}.gpkg", driver=driver[1])
             elif self.type_out == 'SA2':
                 self.listings.to_file(f"output/{self.sa2_area_select}.gpkg", driver=driver[1])
 
-        fig, ax = plt.subplots(figsize=(12, 8))
-        self.listings.plot(ax=ax)
-        plt.axis('equal')
-        ax.set_axis_off()
-        plt.show()
+
+
 
 
 
